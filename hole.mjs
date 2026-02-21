@@ -64,7 +64,8 @@ smolweb.
 This space is pretty empty right now, but I hope to fill it with a bit
 more content over time.
 
-Menu:`);
+## Menu:
+`);
   ctx.directory('About me', '/about');
   ctx.directory('Projects', '/projects');
   ctx.directory('Friends with holes', '/friends');
