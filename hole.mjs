@@ -1,10 +1,11 @@
 // @ts-check
+import { info } from 'node:console';
 import { Server } from 'node:net';
 
 const server = new Server((socket) => {
   socket.on('data', (data) => {
     const input = data.toString().trim();
-    console.log(input);
+    console.log(`${socket.remoteAddress} "${input}"`);
     handle(new GopherContext(input, socket));
     socket.end();
   });
@@ -21,18 +22,25 @@ console.log(`Hole is opened on gopher://${HOLE_HOST}:${HOLE_PORT}`);
  */
 function handle(ctx) {
 
-  ctx.text(` _____                _   _
-| ____|_   _____ _ __| |_( )___
-|  _| \\ \\ / / _ \\ '__| __|// __|
-| |___ \\ V /  __/ |  | |_  \\__ \\
-|_____| \\_/ \\___|_|   \\__| |___/
+  banner(ctx);
+  switch(ctx.path) {
+    case '':
+    case '/':
+      home(ctx);
+      break;
+    default:
+      ctx.error('Page not found!');
+      ctx.directory('Go back to home', '/');
+      break;
+  }
 
-  ____             _                 _   _       _
- / ___| ___  _ __ | |__   ___ _ __  | | | | ___ | | ___
-| |  _ / _ \\| '_ \\| '_ \\ / _ \\ '__| | |_| |/ _ \\| |/ _ \\
-| |_| | (_) | |_) | | | |  __/ |    |  _  | (_) | |  __/
- \\____|\\___/| .__/|_| |_|\\___|_|    |_| |_|\\___/|_|\\___|
-            |_|
+}
+
+/**
+ * @param {GopherContext} ctx
+ */
+function home(ctx) {
+  ctx.text(`# Home
 
 Welcome to my hole! Yes, 'hole' really is the word people use for a
 site on the gopher protocol. I've had a Gopher site on and off for a
@@ -46,15 +54,34 @@ Menu:`);
   ctx.directory('About me', '/about');
   ctx.directory('Projects', '/projects');
   ctx.directory('Friends with holes', '/friends');
-  ctx.directory('My projects', '/projects');
 
   ctx.text('');
   ctx.link('My website', 'https://evertpot.com/');
   ctx.link('My mastodon', 'https://indieweb.social/evert');
   ctx.link('Link to source on Github', 'https://github.com/evert/hole');
 
+}
+
+/**
+ * @param {GopherContext} ctx
+ */
+function banner(ctx) {
+
+  ctx.text(` _____                _   _
+| ____|_   _____ _ __| |_( )___
+|  _| \\ \\ / / _ \\ '__| __|// __|
+| |___ \\ V /  __/ |  | |_  \\__ \\
+|_____| \\_/ \\___|_|   \\__| |___/
+
+  ____             _                 _   _       _
+ / ___| ___  _ __ | |__   ___ _ __  | | | | ___ | | ___
+| |  _ / _ \\| '_ \\| '_ \\ / _ \\ '__| | |_| |/ _ \\| |/ _ \\
+| |_| | (_) | |_) | | | |  __/ |    |  _  | (_) | |  __/
+ \\____|\\___/| .__/|_| |_|\\___|_|    |_| |_|\\___/|_|\\___|
+            |_|`);
 
 }
+
 
 class GopherContext {
 
@@ -108,9 +135,18 @@ class GopherContext {
    * @param {string} url
    */
   link(display, url) {
-    
+
     return this.line('h', display, 'URL:' + url);
-  
+
+  }
+
+  /**
+   * Error line
+   *
+   * @param {string} txt
+   */
+  error(txt) {
+    return this.line('3', txt);
   }
 
   /**
