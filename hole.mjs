@@ -120,7 +120,7 @@ async function guestbook(ctx) {
 
   if (ctx.query) {
     ctx.text(`Thanks for signing my guestbook, "${ctx.query}"!`);
-    await fs.appendFile('guestbook.txt', `${new Date().toISOString()} - ${sanitizeQuery(ctx.query)}\n`);
+    await fs.appendFile('guestbook.txt', `${new Date().toISOString()} - ${ctx.query}\n`);
   }
 
   ctx.text('');
@@ -133,21 +133,6 @@ async function guestbook(ctx) {
   ctx.directory('Go back to home', '/');
 
 }
-
-/**
- * Sanitize user input for the gopher protocol. This is a very basic sanitizer that only allows
- * alphanumeric characters, spaces, and international characters. It also trims whitespace.
- *
- * @param {string} str
- * @returns {string}
- */
-function sanitizeQuery(str) {
-
-  // Only allow alphanumeric and space and international characters, and trim whitespace
-  return str.replace(/[^\p{L}\p{N} ]/gu, '').trim();
-
-}
-
 
 class GopherContext {
 
