@@ -1,13 +1,16 @@
 // @ts-check
-import { info } from 'node:console';
 import { Server } from 'node:net';
+import fs from 'node:fs/promises';
 
 const server = new Server((socket) => {
   socket.on('data', (data) => {
     const input = data.toString().trim();
-    console.log(`${socket.remoteAddress} "${input}"`);
-    handle(new GopherContext(input, socket));
-    socket.end();
+    if (input.includes('\t')) {
+      const [path, query] = input.split('\t');
+      handle(new GopherContext(path, socket, query));
+    } else {
+      handle(new GopherContext(input, socket));
+    }
   });
 });
 
@@ -20,19 +23,30 @@ console.log(`Hole is opened on gopher://${HOLE_HOST}:${HOLE_PORT}`);
 /**
  * @param {GopherContext} ctx
  */
-function handle(ctx) {
+async function handle(ctx) {
 
+  if (ctx.query) {
+    console.log(`${ctx.socket.remoteAddress} "${ctx.path}" "${ctx.query}"`);
+  } else {
+    console.log(`${ctx.socket.remoteAddress} "${ctx.path}"`);
+  }
   banner(ctx);
   switch(ctx.path) {
-    case '':
     case '/':
       home(ctx);
+      break;
+    case '/friends':
+      friends(ctx);
+      break;
+    case '/guestbook':
+      await guestbook(ctx);
       break;
     default:
       ctx.error('Page not found!');
       ctx.directory('Go back to home', '/');
       break;
   }
+  ctx.socket.end();
 
 }
 
@@ -55,6 +69,9 @@ Menu:`);
   ctx.directory('Projects', '/projects');
   ctx.directory('Friends with holes', '/friends');
 
+  ctx.text('');
+  ctx.search('Sign my guestbook', '/guestbook');
+  ctx.directory('View my guestbook', '/guestbook');
   ctx.text('');
   ctx.link('My website', 'https://evertpot.com/');
   ctx.link('My mastodon', 'https://indieweb.social/evert');
@@ -82,16 +99,68 @@ function banner(ctx) {
 
 }
 
+/**
+ * @param {GopherContext} ctx
+ */
+function friends(ctx) {
+
+  ctx.text(`# Friends with holes
+
+Sadly I don't have any friends yet that I can link to. Here's hoping
+this changes in the future!`);
+
+  ctx.directory('Go back to home', '/');
+
+}
+
+/**
+ * @param {GopherContext} ctx
+ */
+async function guestbook(ctx) {
+
+  if (ctx.query) {
+    ctx.text(`Thanks for signing my guestbook, "${ctx.query}"!`);
+    await fs.appendFile('guestbook.txt', `${new Date().toISOString()} - ${sanitizeQuery(ctx.query)}\n`);
+  }
+
+  ctx.text('');
+  ctx.text(`# Guestbook\n`);
+  ctx.text(await fs.readFile('guestbook.txt', 'utf-8').catch(() => 'No entries yet! Sign the guestbook to be the first one!'));
+
+  ctx.text('');
+  if (!ctx.query) ctx.search('Sign my guestbook', '/guestbook');
+
+  ctx.directory('Go back to home', '/');
+
+}
+
+/**
+ * Sanitize user input for the gopher protocol. This is a very basic sanitizer that only allows
+ * alphanumeric characters, spaces, and international characters. It also trims whitespace.
+ *
+ * @param {string} str
+ * @returns {string}
+ */
+function sanitizeQuery(str) {
+
+  // Only allow alphanumeric and space and international characters, and trim whitespace
+  return str.replace(/[^\p{L}\p{N} ]/gu, '').trim();
+
+}
+
 
 class GopherContext {
 
   /**
    * @param {string} path
    * @param {import('net').Socket} socket
+   * @param {string|null} query
    */
-  constructor(path, socket) {
-    this.path = path;
+  constructor(path, socket, query = null) {
+    // Our server adds a / to every path
+    this.path = path[0] === '/' ? path : '/' + path;
     this.socket = socket;
+    this.query = query;
   }
 
   /**
@@ -147,6 +216,16 @@ class GopherContext {
    */
   error(txt) {
     return this.line('3', txt);
+  }
+
+  /**
+   * Search form
+   *
+   * @param {string} display
+   * @param {string} path
+   */
+  search(display, path) {
+    return this.line('7', display, path, HOLE_HOST, HOLE_PORT);
   }
 
   /**
