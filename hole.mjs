@@ -14,7 +14,7 @@ const server = new Server((socket) => {
   });
 });
 
-const HOLE_PORT = 7070;
+const HOLE_PORT = +(process.env.HOLE_PORT ?? '7070');
 const HOLE_HOST = process.env.HOLE_HOST ?? 'localhost';
 server.listen(HOLE_PORT);
 
