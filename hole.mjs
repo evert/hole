@@ -1,91 +1,20 @@
 // @ts-check
-import { Server } from 'node:net';
 import fs from 'node:fs/promises';
+import { GopherContext, GopherServer } from './server.mjs';
 
-const server = new Server((socket) => {
-  socket.on('data', (data) => {
-    const input = data.toString().trim();
-    if (input.includes('\t')) {
-      const [path, query] = input.split('\t');
-      handle(new GopherContext(path, socket, query));
-    } else {
-      handle(new GopherContext(input, socket));
-    }
-  });
-});
-
-const HOLE_PORT = +(process.env.HOLE_PORT ?? '7070');
-const HOLE_HOST = process.env.HOLE_HOST ?? 'localhost';
-server.listen(HOLE_PORT);
-
-console.log(`Hole is opened on gopher://${HOLE_HOST}:${HOLE_PORT}`);
-
-/**
- * @param {GopherContext} ctx
- */
-async function handle(ctx) {
-
-  if (ctx.query) {
-    console.log(`${ctx.socket.remoteAddress} "${ctx.path}" "${ctx.query}"`);
-  } else {
-    console.log(`${ctx.socket.remoteAddress} "${ctx.path}"`);
-  }
-  banner(ctx);
-  switch(ctx.path) {
-    case '/':
-      home(ctx);
-      break;
-    case '/friends':
-      friends(ctx);
-      break;
-    case '/guestbook':
-      await guestbook(ctx);
-      break;
-    default:
-      ctx.error('Page not found!');
-      ctx.directory('Go back to home', '/');
-      break;
-  }
-  ctx.socket.end();
-
-}
-
-/**
- * @param {GopherContext} ctx
- */
-function home(ctx) {
-  ctx.text(`# Home
-
-Welcome to my hole! Yes, 'hole' really is the word people use for a
-site on the gopher protocol. I've had a Gopher site on and off for a
-few times, but it's finally time to have a more permanent spot on the
-smolweb.
-
-This space is pretty empty right now, but I hope to fill it with a bit
-more content over time.
-
-## Menu:
-`);
-  ctx.directory('About me', '/about');
-  ctx.directory('Projects', '/projects');
-  ctx.directory('Friends with holes', '/friends');
-
-  ctx.text('');
-  ctx.search('Sign my guestbook', '/guestbook');
-  ctx.directory('View my guestbook', '/guestbook');
-  ctx.text('');
-  ctx.link('My website', 'https://evertpot.com/');
-  ctx.link('My mastodon', 'https://indieweb.social/evert');
-  ctx.link('Link to source on Github', 'https://github.com/evert/hole');
-
-}
+const server = new GopherServer(
+  process.env.HOLE_HOST ?? 'localhost',
+  +(process.env.HOLE_PORT ?? '7070'),
+);
+server.start();
+console.log(`Hole is opened on gopher://${server.host}:${server.port}/`);
 
 /**
  * @param {GopherContext} ctx
  */
 function banner(ctx) {
 
-  ctx.text(` _____                _   _
+  ctx.info(` _____                _   _
 | ____|_   _____ _ __| |_( )___
 |  _| \\ \\ / / _ \\ '__| __|// __|
 | |___ \\ V /  __/ |  | |_  \\__ \\
@@ -100,135 +29,124 @@ function banner(ctx) {
 
 }
 
-/**
- * @param {GopherContext} ctx
- */
-function friends(ctx) {
+server.route('/', ctx => {
 
-  ctx.text(`# Friends with holes
+  banner(ctx);
+  ctx.info(`# Home
+
+Welcome to my hole! Yes, 'hole' really is the word people use for a
+site on the gopher protocol. I've had a Gopher site on and off for a
+few times, but it's finally time to have a more permanent spot on the
+smolweb.
+
+This space is pretty empty right now, but I hope to fill it with a bit
+more content over time.
+
+## Menu:
+`);
+  ctx.directory('About this hole', '/about');
+  ctx.directory('Projects', '/projects');
+  ctx.directory('Friends with holes', '/friends');
+  ctx.directory('Interesting Gopher Sites', '/links');
+
+  ctx.info('');
+  ctx.search('Sign my guestbook', '/guestbook');
+  ctx.directory('View my guestbook', '/guestbook');
+  ctx.info('');
+  ctx.link('My website', 'https://evertpot.com/');
+  ctx.link('My mastodon', 'https://indieweb.social/evert');
+  ctx.link('Link to source on Github', 'https://github.com/evert/hole');
+
+});
+
+server.route('/about', ctx =>  {
+
+  banner(ctx);
+  ctx.title('# About this hole');
+  ctx.info(`
+When I just got on the internet and started making websites, I was
+always fascinated by protocols. I slightly too young for Gopher's
+heyday, but I remember 'gopher' be one of the things you could
+specify a proxy for in early Internet Explorer, and randomly ran into
+gopher:// sites back when all major browsers still had built-in
+support for this.
+
+Back in 2006 I decided to make a little gopher server with PHP and
+inentd. It didn't go very far, but gopher's just kinda been in the
+back of my mind ever since.
+`);
+  ctx.link('My original Gopher server', 'https://evertpot.com/100/');
+
+  ctx.info(`
+Bacause it\'s not super easy to set up a free Gopher server due to
+needing an IP address (no vhosts on gopher), I never really got around
+to making a permanent site. But 20 years later in 2026, I finally have
+a little homelab I can run this on.
+
+So I decided to make a new server, this time in Node.js. But in the
+last 20 years, my reason for making this has also changed a bit. While
+originally it may just have been a novelty, now gopher feels a bit
+more like a respite from the normal web that's been overrun by ads,
+corporate interests, AI, misinformation and toxic short form content.
+
+My server is open source, if you want to take a look or fork it to
+make your own hole own.
+`);
+
+  ctx.link('Server source on Github', 'https://github.com/evert/hole');
+
+  ctx.info(`
+So what is this going to be?
+
+I have a blog on https://evertpot.com/ as well, but it's mostly
+technical. I might use this space as a slightly more casual and
+personal space, but not sure yet!
+`);
+
+  ctx.link('My HTTP blog', 'https://evertpot.com/');
+  ctx.info('');
+
+  ctx.directory('Go back to home', '/');
+
+});
+
+server.route('/friends', ctx =>  {
+
+  banner(ctx);
+  ctx.info(`# Friends with holes
 
 Sadly I don't have any friends yet that I can link to. Here's hoping
 this changes in the future!`);
 
   ctx.directory('Go back to home', '/');
 
-}
+});
 
-/**
- * @param {GopherContext} ctx
- */
-async function guestbook(ctx) {
+server.route('/guestbook', async ctx => {
 
+  banner(ctx);
   if (ctx.query) {
-    ctx.text(`Thanks for signing my guestbook, "${ctx.query}"!`);
+    ctx.info(`Thanks for signing my guestbook, "${ctx.query}"!`);
     await fs.appendFile('guestbook.txt', `${new Date().toISOString()} - ${ctx.query}\n`);
   }
 
-  ctx.text('');
-  ctx.text(`# Guestbook\n`);
-  ctx.text(await fs.readFile('guestbook.txt', 'utf-8').catch(() => 'No entries yet! Sign the guestbook to be the first one!'));
+  ctx.info('');
+  ctx.info(`# Guestbook\n`);
+  ctx.info(await fs.readFile('guestbook.txt', 'utf-8').catch(() => 'No entries yet! Sign the guestbook to be the first one!'));
 
-  ctx.text('');
+  ctx.info('');
   if (!ctx.query) ctx.search('Sign my guestbook', '/guestbook');
 
   ctx.directory('Go back to home', '/');
 
-}
+});
 
-class GopherContext {
+server.route('/links', ctx => {
 
-  /**
-   * @param {string} path
-   * @param {import('net').Socket} socket
-   * @param {string|null} query
-   */
-  constructor(path, socket, query = null) {
-    // Our server adds a / to every path
-    this.path = path[0] === '/' ? path : '/' + path;
-    this.socket = socket;
-    this.query = query;
-  }
+  banner(ctx);
+  ctx.info(`# Interesting Gopher Sites`);
+  ctx.link('Steven Frank\'s Gopher Site', 'gopher://stevenf.com/');
+  ctx.info('');
+  ctx.directory('Go back to home', '/');
 
-  /**
-   * Informational line. Will auto-split on newlines and long lines.
-   *
-   * @param {string} txt
-   */
-  text(txt) {
-    let r = '';
-    for(let l of txt.split('\n')) {
-
-      while(l.length > 70) {
-        r += this.line('i', l.slice(0, 70));
-        l = l.slice(70);
-      }
-      r += this.line('i', l);
-    }
-    return r;
-  }
-
-  /**
-   * Links to a different gopher menu/directory.
-   *
-   * Omit host and port for a local link
-   *
-   * @param {string} display
-   * @param {string} path
-   * @param {string|null} host
-   * @param {number|null} port
-   */
-  directory(display, path, host = null, port = null) {
-
-    return this.line('1', display, path, host??HOLE_HOST, port??HOLE_PORT);
-
-  }
-
-  /**
-   * Links to an external URL.
-   *
-   * @param {string} display
-   * @param {string} url
-   */
-  link(display, url) {
-
-    return this.line('h', display, 'URL:' + url);
-
-  }
-
-  /**
-   * Error line
-   *
-   * @param {string} txt
-   */
-  error(txt) {
-    return this.line('3', txt);
-  }
-
-  /**
-   * Search form
-   *
-   * @param {string} display
-   * @param {string} path
-   */
-  search(display, path) {
-    return this.line('7', display, path, HOLE_HOST, HOLE_PORT);
-  }
-
-  /**
-   * Generic line writer
-   *
-   * @param {string} char
-   * @param {string} display
-   * @param {string|null} path
-   * @param {string|null} host
-   * @param {number|null} port
-   */
-  line(char, display, path = null, host = null, port = null) {
-
-    this.socket.write([char + display, path??'', host??'host.invalid', port??0].join('\t') + '\r\n');
-
-  }
-
-}
-
-
+});
