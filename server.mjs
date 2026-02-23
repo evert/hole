@@ -167,6 +167,22 @@ export class GopherServer {
           this.handle(new GopherContext(this, input, socket));
         }
       });
+
+      socket.on("error", (/** @type {NodeJS.ErrnoException} */ err) => {
+        if (err && (err.code === "ECONNRESET" || err.code === "EPIPE")) {
+          // Expected: client hung up rudely or we wrote to a dead socket.
+          // Don’t crash; usually don’t spam logs.
+          return;
+        }
+
+        // Unexpected errors: log with some context
+        console.warn("Socket error:", {
+          code: err?.code,
+          message: err?.message,
+          remote: `${socket.remoteAddress}:${socket.remotePort}`,
+        });
+      });
+
     });
     this.server.listen(this.port);
 
