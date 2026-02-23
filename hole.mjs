@@ -65,7 +65,7 @@ server.route('/about', ctx =>  {
   ctx.title('# About this hole');
   ctx.info(`
 When I just got on the internet and started making websites, I was
-always fascinated by protocols. I slightly too young for Gopher's
+always fascinated by protocols. I'm slightly too young for Gopher's
 heyday, but I remember 'gopher' be one of the things you could
 specify a proxy for in early Internet Explorer, and randomly ran into
 gopher:// sites back when all major browsers still had built-in
