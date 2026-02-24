@@ -25,7 +25,8 @@ function banner(ctx) {
 | |  _ / _ \\| '_ \\| '_ \\ / _ \\ '__| | |_| |/ _ \\| |/ _ \\
 | |_| | (_) | |_) | | | |  __/ |    |  _  | (_) | |  __/
  \\____|\\___/| .__/|_| |_|\\___|_|    |_| |_|\\___/|_|\\___|
-            |_|`);
+            |_|
+`);
 
 }
 
@@ -145,6 +146,8 @@ server.route('/links', ctx => {
 
   banner(ctx);
   ctx.info(`# Interesting Gopher Sites`);
+  ctx.info('');
+  ctx.link('Phetech gopher client', 'gopher://phkt.io/1/phetch');
   ctx.link('Steven Frank\'s Gopher Site', 'gopher://stevenf.com/');
   ctx.info('');
   ctx.directory('Go back to home', '/');
