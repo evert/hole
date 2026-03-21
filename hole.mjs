@@ -9,32 +9,26 @@ const server = new GopherServer(
 server.start();
 console.log(`Hole is opened on gopher://${server.host}:${server.port}/`);
 
+const logos = {
+  main: await fs.readFile('./logos/main.txt', 'utf-8'),
+  burrow: await fs.readFile('./logos/burrow.txt', 'utf-8'),
+};
+
 /**
  * @param {GopherContext} ctx
  */
-function banner(ctx) {
+async function banner(ctx, logo = 'main') {
 
-  ctx.info(` _____                _   _
-| ____|_   _____ _ __| |_( )___
-|  _| \\ \\ / / _ \\ '__| __|// __|
-| |___ \\ V /  __/ |  | |_  \\__ \\
-|_____| \\_/ \\___|_|   \\__| |___/
-
-  ____             _                 _   _       _
- / ___| ___  _ __ | |__   ___ _ __  | | | | ___ | | ___
-| |  _ / _ \\| '_ \\| '_ \\ / _ \\ '__| | |_| |/ _ \\| |/ _ \\
-| |_| | (_) | |_) | | | |  __/ |    |  _  | (_) | |  __/
- \\____|\\___/| .__/|_| |_|\\___|_|    |_| |_|\\___/|_|\\___|
-            |_|
-`);
+  ctx.info(logos[logo]);
+  ctx.info('');
 
 }
 
 server.route('/', ctx => {
 
   banner(ctx);
-  ctx.info(`# Home
-
+  ctx.title('- Home -');
+  ctx.info(`
 Welcome to my hole! Yes, 'hole' really is the word people use for a
 site on the gopher protocol. I've had a Gopher site on and off for a
 few times, but it's finally time to have a more permanent spot on the
@@ -43,8 +37,8 @@ smolweb.
 This space is pretty empty right now, but I hope to fill it with a bit
 more content over time.
 
-## Menu:
 `);
+  ctx.title('- Menu -');
   ctx.directory('About this hole', '/about');
   ctx.directory('Projects', '/projects');
   ctx.directory('Friends with holes', '/friends');
@@ -63,7 +57,7 @@ more content over time.
 server.route('/about', ctx =>  {
 
   banner(ctx);
-  ctx.title('# About this hole');
+  ctx.title('- About this hole -');
   ctx.info(`
 When I just got on the internet and started making websites, I was
 always fascinated by protocols. I'm slightly too young for Gopher's
@@ -114,8 +108,8 @@ personal space, but not sure yet!
 server.route('/friends', ctx =>  {
 
   banner(ctx);
-  ctx.info(`# Friends with holes
-
+  ctx.title('# Friends with holes');
+  ctx.info(`
 Sadly I don't have any friends yet that I can link to. Here's hoping
 this changes in the future!`);
 
@@ -132,12 +126,13 @@ server.route('/guestbook', async ctx => {
   }
 
   ctx.info('');
-  ctx.info(`# Guestbook\n`);
+  ctx.title(`# Guestbook`);
+  ctx.info('');
   ctx.info(await fs.readFile('guestbook.txt', 'utf-8').catch(() => 'No entries yet! Sign the guestbook to be the first one!'));
 
   ctx.info('');
   if (!ctx.query) ctx.search('Sign my guestbook', '/guestbook');
-
+ 
   ctx.directory('Go back to home', '/');
 
 });
@@ -145,10 +140,36 @@ server.route('/guestbook', async ctx => {
 server.route('/links', ctx => {
 
   banner(ctx);
-  ctx.info(`# Interesting Gopher Sites`);
+  ctx.title(`# Interesting Gopher Sites`);
   ctx.info('');
   ctx.link('Phetech gopher client', 'gopher://phkt.io/1/phetch');
   ctx.link('Steven Frank\'s Gopher Site', 'gopher://stevenf.com/');
+  ctx.info('');
+  ctx.directory('Go back to home', '/');
+
+});
+
+server.route('/projects/burrow', ctx => {
+
+  banner(ctx, 'burrow');
+  ctx.title('# Burrow');
+
+  ctx.info(`
+
+Burrow is a Gopher client and HTTP proxy, written in Javascript.
+
+There's already a bunch of well-known public gopher to HTTP proxies
+out there, but I wanted to try my hand at one that evokes the feeling
+of 90's browsers and a bit more whimsy.
+
+It doesn't support every Gopher feature (notably, it doesn't support
+search yet) and I'm not sure how far I'll take this, but it's open
+source if you want to take a look or play around with it.
+`);
+
+  ctx.link('Try it', 'https://burrow.din.gy/');
+  ctx.link('Burrow source on Github', 'https://github.com/evert/burrow');
+
   ctx.info('');
   ctx.directory('Go back to home', '/');
 
