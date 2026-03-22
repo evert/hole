@@ -197,13 +197,14 @@ It doesn't support every Gopher feature (notably, it doesn't support
 search yet) and I'm not sure how far I'll take this, but it's open
 source if you want to take a look or play around with it.`);
 
+  ctx.title('- Links -');
   ctx.image('Screenshot', '/images/gopherpedia.png');
 
   ctx.link('Try it', 'https://burrow.din.gy/');
-  ctx.link('Burrow source on Github', 'https://github.com/evert/burrow');
+  ctx.link('Source on Github', 'https://github.com/evert/burrow');
 
   ctx.br();
-  ctx.directory('Go back to home', '/');
+  ctx.directory('Go back to projects', '/projects');
 
 });
 
@@ -213,18 +214,19 @@ server.route('/projects/hole', ctx => {
 
   ctx.title('- Hole -');
   ctx.p(
-`Hole is the name of this Gopher server It's written in Node.js. It's written
-as a mini framework but the source also contains this website.
+`Hole is the name of this Gopher server It's written in Node.js. It's
+written as a mini framework but the source also contains this website.
 
-If you'd like to start your own gopher server, just fork mine and change the
-content. If you'd like to use the gopher server as a Node.js dependency, I'd
-be happy to package it as an NPM package, just let me know!`);
+If you'd like to start your own gopher server, just fork mine and
+change the content. If you'd like to use the gopher server as a
+Node.js dependency, I'd be happy to package it as an NPM package, just
+let me know!`);
 
   ctx.title('- Links -');
   ctx.link('Source on Github', 'https://github.com/evert/hole');
 
   ctx.br();
-  ctx.directory('Go back to home', '/');
+  ctx.directory('Go back to projects', '/projects');
 
 });
 
