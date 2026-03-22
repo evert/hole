@@ -158,6 +158,7 @@ server.route('/burrow-landing', ctx => {
   ctx.link('Internet Gopher Club Underground Syndicate', 'gopher://sdf.org/1');
   ctx.link('Gopherpedia', 'gopher://gopherpedia.com/');
   ctx.link('Phetech gopher client', 'gopher://phkt.io/1/phetch');
+  ctx.link('Floodgap', 'gopher://gopher.floodgap.com/');
 
   ctx.br();
   ctx.title('- About Burrow -');
