@@ -1,5 +1,6 @@
 // @ts-check
 import { Server } from 'node:net';
+import fs from 'node:fs';
 
 /**
  * GopherContext holds all informationa bout a single gopher request
@@ -28,16 +29,25 @@ export class GopherContext {
    * @param {string} txt
    */
   info(txt) {
-    let r = '';
     for(let l of txt.split('\n')) {
 
       while(l.length > 70) {
-        r += this.line('i', l.slice(0, 70));
+        this.line('i', l.slice(0, 70));
         l = l.slice(70);
       }
-      r += this.line('i', l);
+      this.line('i', l);
     }
-    return r;
+  }
+
+  /**
+   * Paragraph
+   *
+   * Same as an info line but ends in a newline.
+   *
+   * @param {string} txt
+   */
+  p(txt) {
+    this.info(txt + '\n');
   }
 
   /**
@@ -51,7 +61,15 @@ export class GopherContext {
    * @param {string} txt
    */
   title(txt) {
-    return this.line('i', txt, 'TITLE');
+    this.line('i', txt, 'TITLE')
+    this.line('i', '');
+  }
+
+  /**
+   * Empty line
+   */
+  br() {
+    this.line('i', '');
   }
 
   /**
@@ -66,7 +84,7 @@ export class GopherContext {
    */
   directory(display, path, host = null, port = null) {
 
-    return this.line(
+    this.line(
       '1',
       display,
       path,
@@ -87,7 +105,7 @@ export class GopherContext {
     const urlObj = new URL(url);
     if (urlObj.protocol === 'gopher:') {
       const type = urlObj.pathname.length >= 2 ? urlObj.pathname[1] : '1';
-      return this.line(
+      this.line(
         type,
         display,
         urlObj.pathname.slice(2),
@@ -95,7 +113,7 @@ export class GopherContext {
         +(urlObj.port || '70')
       );
     } else {
-      return this.line('h', display, 'URL:' + url);
+      this.line('h', display, 'URL:' + url);
     }
 
   }
@@ -106,7 +124,8 @@ export class GopherContext {
    * @param {string} txt
    */
   error(txt) {
-    return this.line('3', txt);
+    this.line('3', txt);
+    console.error('Error:', txt);
   }
 
   /**
@@ -116,12 +135,30 @@ export class GopherContext {
    * @param {string} path
    */
   search(display, path) {
-    return this.line(
+    this.line(
       '7',
       display,
       path,
       this.server.host,
       this.server.port
+    );
+
+  }
+
+  /**
+   * Link to image
+   *
+   * @param {string} display
+   * @param {string} path
+   */
+  image(display, path, host = null, port = null) {
+
+    this.line(
+      'I',
+      display,
+      path,
+      host??this.server.host,
+      port??this.server.port
     );
 
   }
@@ -141,10 +178,35 @@ export class GopherContext {
 
   }
 
+  /**
+   * If a binary was sent this is set to true.
+   *
+   * We use this because non-binary responses should end in a dot.
+   */
+  binary = false;
+
+  /**
+   * Send binary down the pipe
+   *
+   * @param {string} path
+   */
+  serveBinary(path) {
+
+    const stream = fs.createReadStream(path);
+    stream.on('error', (err) => {
+      console.error(`Error serving binary ${path} to ${this.socket.remoteAddress}:`, err);
+      this.socket.end();
+    });
+    stream.pipe(this.socket);
+    this.binary = true;
+
+  }
+
+
 }
 
 export class GopherServer {
-  
+
   /**
    * @param {number} port
    * @param {string} host
@@ -222,7 +284,10 @@ export class GopherServer {
 
     } finally {
 
-      ctx.socket.end();
+      if (!ctx.binary) {
+        ctx.socket.write('.\r\n'); // End of response
+        ctx.socket.end();
+      }
 
     }
 

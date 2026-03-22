@@ -45,7 +45,6 @@ more content over time.
   ctx.directory('Interesting Gopher Sites', '/links');
 
   ctx.info('');
-  ctx.search('Sign my guestbook', '/guestbook');
   ctx.directory('View my guestbook', '/guestbook');
   ctx.info('');
   ctx.link('My website', 'https://evertpot.com/');
@@ -132,7 +131,7 @@ server.route('/guestbook', async ctx => {
 
   ctx.info('');
   if (!ctx.query) ctx.search('Sign my guestbook', '/guestbook');
- 
+
   ctx.directory('Go back to home', '/');
 
 });
@@ -149,13 +148,45 @@ server.route('/links', ctx => {
 
 });
 
+server.route('/burrow-landing', ctx => {
+
+  banner(ctx, 'burrow');
+
+  ctx.p('Welcome to the Gophersphere');
+  ctx.p('If you\'re new to gopher, take a look at some of the following links');
+  ctx.title('- Gopher Resources -');
+  ctx.link('Internet Gopher Club Underground Syndicate', 'gopher://sdf.org/1');
+  ctx.link('Gopherpedia', 'gopher://gopherpedia.com/');
+  ctx.link('Phetech gopher client', 'gopher://phkt.io/1/phetch');
+
+  ctx.br();
+  ctx.title('- About Burrow -');
+  ctx.p('Burrow is a Gopher to HTML proxy. You might be using it right now to\nview this page!');
+  ctx.directory('Lean more about Burrow', '/projects/burrow');
+  ctx.directory('My Gopher page', '/');
+  ctx.link('My website', 'https://evertpot.com/');
+
+});
+
+
+server.route('/projects', ctx => {
+
+  banner(ctx);
+  ctx.title('- Gopher-related projects -');
+  ctx.directory('Burrow - Gopher to HTTP proxy', '/projects/burrow');
+  ctx.directory('Hole - Node.js PHP server', '/projects/hole');
+  ctx.directory('PHP Gopher server (2006)', 'https://evertpot.com/100/');
+
+  ctx.br();
+  ctx.directory('Go back to home', '/');
+
+});
+
 server.route('/projects/burrow', ctx => {
 
   banner(ctx, 'burrow');
-  ctx.title('# Burrow');
 
-  ctx.info(`
-
+  ctx.p(`
 Burrow is a Gopher client and HTTP proxy, written in Javascript.
 
 There's already a bunch of well-known public gopher to HTTP proxies
@@ -164,13 +195,41 @@ of 90's browsers and a bit more whimsy.
 
 It doesn't support every Gopher feature (notably, it doesn't support
 search yet) and I'm not sure how far I'll take this, but it's open
-source if you want to take a look or play around with it.
-`);
+source if you want to take a look or play around with it.`);
+
+  ctx.image('Screenshot', '/images/gopherpedia.png');
 
   ctx.link('Try it', 'https://burrow.din.gy/');
   ctx.link('Burrow source on Github', 'https://github.com/evert/burrow');
 
-  ctx.info('');
+  ctx.br();
   ctx.directory('Go back to home', '/');
+
+});
+
+server.route('/projects/hole', ctx => {
+
+  banner(ctx);
+
+  ctx.title('- Hole -');
+  ctx.p(
+`Hole is the name of this Gopher server It's written in Node.js. It's written
+as a mini framework but the source also contains this website.
+
+If you'd like to start your own gopher server, just fork mine and change the
+content. If you'd like to use the gopher server as a Node.js dependency, I'd
+be happy to package it as an NPM package, just let me know!`);
+
+  ctx.title('- Links -');
+  ctx.link('Source on Github', 'https://github.com/evert/hole');
+
+  ctx.br();
+  ctx.directory('Go back to home', '/');
+
+});
+
+server.route('/images/gopherpedia.png', async ctx => {
+
+  await ctx.serveBinary('./images/gopherpedia.png');
 
 });
