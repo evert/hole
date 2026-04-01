@@ -176,7 +176,7 @@ server.route('/projects', ctx => {
   ctx.title('- Gopher-related projects -');
   ctx.directory('Burrow - Gopher to HTTP proxy', '/projects/burrow');
   ctx.directory('Hole - Node.js Gopher server', '/projects/hole');
-  ctx.directory('PHP Gopher server (2006)', 'https://evertpot.com/100/');
+  ctx.link('PHP Gopher server (2006)', 'https://evertpot.com/100/');
 
   ctx.br();
   ctx.directory('Go back to home', '/');
